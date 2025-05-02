@@ -9,6 +9,7 @@ import DigitalSignature.KeamanInformasi.Service.SignatureService;
 import DigitalSignature.KeamanInformasi.model.SignatureRecord;
 import DigitalSignature.KeamanInformasi.model.SignatureRequest;
 import DigitalSignature.KeamanInformasi.model.SignatureVerificationRequest;
+import DigitalSignature.KeamanInformasi.model.VerificationResult;
 
 @RestController
 public class SignatureController {
@@ -30,12 +31,32 @@ public class SignatureController {
     }
     
     @PostMapping("/verify")
-    public ResponseEntity<String> verifySignature(@RequestBody SignatureVerificationRequest request) {
+    public ResponseEntity<VerificationResult> verifySignature(@RequestBody SignatureVerificationRequest request) {
         try {
-            boolean isValid = service.verify(request.getFileData(), request.getDigitalSignature());
-            return ResponseEntity.ok(isValid ? "Valid Signature" : "Invalid Signature");
+            // Default values if not provided
+            String fileName = request.getFileName() != null ? request.getFileName() : "unknown";
+            String verifiedBy = request.getVerifiedBy() != null ? request.getVerifiedBy() : "anonymous";
+            
+            VerificationResult result = service.verify(
+                request.getFileData(), 
+                request.getDigitalSignature(),
+                fileName,
+                verifiedBy
+            );
+            
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Verification failed: " + e.getMessage());
+            VerificationResult errorResult = new VerificationResult(
+                "unknown", 
+                request.getDigitalSignature(), 
+                request.getFileData() != null ? (long) request.getFileData().length : 0L,
+                "anonymous"
+            );
+            errorResult.setVerificationStatus(VerificationResult.Status.ERROR);
+            errorResult.setMessage("Verification process failed: " + e.getMessage());
+            errorResult.setTimestamp(java.time.LocalDateTime.now());
+            
+            return ResponseEntity.status(500).body(errorResult);
         }
     }
 }
