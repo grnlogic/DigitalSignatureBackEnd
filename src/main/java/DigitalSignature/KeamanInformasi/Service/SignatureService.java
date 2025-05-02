@@ -19,7 +19,8 @@ public class SignatureService {
 
     private final KeyPair keyPair;
     
-    @Autowired
+    // Make the repository optional to avoid startup issues
+    @Autowired(required = false)
     private VerificationRepository verificationRepository;
 
     public SignatureService() throws Exception {
@@ -61,8 +62,11 @@ public class SignatureService {
             result.setMessage("Error during verification: " + e.getMessage());
         }
         
-        // Save the verification result to the database
-        return verificationRepository.save(result);
+        // Save the verification result to the database if repository is available
+        if (verificationRepository != null) {
+            return verificationRepository.save(result);
+        }
+        return result;
     }
     
     // For backward compatibility
