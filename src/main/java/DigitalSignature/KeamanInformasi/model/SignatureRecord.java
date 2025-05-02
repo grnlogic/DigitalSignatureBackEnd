@@ -29,8 +29,7 @@ public class SignatureRecord {
 
     private String signedBy;
 
-    // Add explicit getters and setters for all fields to ensure they're available
-    
+    //getter //setter    
     public String getOriginalFileName() {
         return originalFileName;
     }
